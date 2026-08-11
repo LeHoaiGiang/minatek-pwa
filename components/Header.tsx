@@ -1,104 +1,142 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Phone, Globe, QrCode, Cpu, Wifi, ShieldCheck } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Phone, QrCode, Radio } from 'lucide-react';
+import { TabData } from '@/lib/store';
 
 interface HeaderProps {
   onOpenSimulator: () => void;
   onOpenQrScanner: () => void;
+  tabsData?: TabData[];
+  activeTabIndex?: number;
+  onSelectTab?: (index: number) => void;
+  onEditTab?: (index: number) => void;
 }
 
-export default function Header({ onOpenSimulator, onOpenQrScanner }: HeaderProps) {
+export default function Header({
+  onOpenSimulator,
+  onOpenQrScanner,
+  tabsData = [],
+  activeTabIndex = 0,
+  onSelectTab,
+  onEditTab,
+}: HeaderProps) {
   const [showPhone, setShowPhone] = useState(false);
   const [showWeb, setShowWeb] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleTouchStart = (index: number) => {
+    timerRef.current = setTimeout(() => {
+      if (onEditTab) onEditTab(index);
+    }, 600);
+  };
+
+  const handleTouchEnd = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
 
   return (
-    <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-cyan-500/20 px-4 py-3 shadow-lg">
-      <div className="max-w-6xl mx-auto flex items-center justify-between gap-2">
-        {/* Left: Branding & QR Scanner */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onOpenQrScanner}
-            className="p-2.5 bg-slate-900/90 border border-cyan-500/30 rounded-xl text-cyan-400 hover:text-cyan-300 hover:border-cyan-400 hover:bg-slate-800 transition-all active:scale-95 shadow-inner"
-            title="Quét mã QR kết nối thiết bị"
-          >
-            <QrCode className="w-5 h-5" />
-          </button>
+    <header className="sticky top-0 z-40 bg-white text-slate-800 rounded-b-[20px] shadow-md border-b border-slate-100 safe-area-top">
+      <div className="px-3 py-2 flex items-center justify-between gap-2">
+        {/* Left: QR Code Icon (matching Flutter leading: Icons.qr_code) */}
+        <button
+          onClick={onOpenQrScanner}
+          className="p-1.5 text-[#426373] hover:text-cyan-600 transition-colors rounded-lg active:scale-95"
+          title="Quét mã QR kết nối thiết bị"
+        >
+          <QrCode className="w-6 h-6" />
+        </button>
 
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-500 flex items-center justify-center text-white font-black text-lg shadow-md border border-cyan-300/40">
-                M
-              </div>
-              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-slate-950 rounded-full pulse-indicator"></span>
-            </div>
-            <div>
-              <h1 className="text-base font-extrabold tracking-tight text-white flex items-center gap-1.5">
-                MINATEK
-                <span className="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 bg-cyan-500/20 text-cyan-300 rounded border border-cyan-400/30">PWA</span>
-              </h1>
-              <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium">
-                <span className="flex items-center gap-1 text-emerald-400">
-                  <Wifi className="w-3 h-3" /> Online
-                </span>
-                <span>•</span>
-                <span className="text-slate-400">IoT Gateway 1.0</span>
-              </div>
-            </div>
-          </div>
+        {/* Center Title: Logo Minatek image (matching Flutter title: Image minatek.vn) */}
+        <div className="flex-1 flex justify-center items-center">
+          <img
+            src="https://minatek.vn/uploads/san-pham/logo-minatek-52cJ.png"
+            alt="Minatek Logo"
+            className="h-8 object-contain"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+          <span className="font-extrabold text-[#109bc5] text-lg tracking-tight ml-1 font-sans">
+            MINATEK
+          </span>
         </div>
 
-        {/* Right: Actions (Hotline, Web, IoT Sim) */}
-        <div className="flex items-center gap-2">
-          {/* IoT Simulator Trigger */}
+        {/* Right Actions: Phone & Website Buttons (matching Flutter actions) */}
+        <div className="flex items-center gap-1.5">
+          {/* Phone Hotline Button */}
           <button
-            onClick={onOpenSimulator}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-slate-900/90 border border-cyan-500/40 text-cyan-300 text-xs font-semibold rounded-xl hover:bg-cyan-500/20 hover:border-cyan-400 transition-all shadow-sm"
-            title="Giả lập dữ liệu thiết bị IoT"
+            onClick={() => {
+              setShowPhone(!showPhone);
+              setShowWeb(false);
+            }}
+            onDoubleClick={() => window.open('tel:0942926979')}
+            className="bg-cyan-500 hover:bg-cyan-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm active:scale-95"
+            title="Nhấn đúp để gọi hotline 094 292 6979"
           >
-            <Cpu className="w-4 h-4 text-cyan-400 animate-spin-slow" />
-            <span>Giả Lập IoT</span>
+            <Phone className={`w-4 h-4 ${showPhone ? 'text-red-400' : 'text-white'}`} />
+            {showPhone && (
+              <span className="text-red-500 font-extrabold text-xs ml-0.5 whitespace-nowrap animate-fade-in">
+                094 292 6979
+              </span>
+            )}
           </button>
-
-          {/* Hotline Button */}
-          <div className="relative">
-            <button
-              onClick={() => {
-                setShowPhone(!showPhone);
-                setShowWeb(false);
-              }}
-              onDoubleClick={() => window.open('tel:0942926979')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                showPhone
-                  ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30'
-                  : 'bg-slate-900 border border-cyan-500/30 text-cyan-400 hover:bg-slate-800'
-              }`}
-            >
-              <Phone className="w-4 h-4 text-rose-400 animate-bounce-short" />
-              {showPhone ? <span className="text-xs">094 292 6979</span> : null}
-            </button>
-          </div>
 
           {/* Website Link Button */}
-          <div className="relative">
-            <button
-              onClick={() => {
-                setShowWeb(!showWeb);
-                setShowPhone(false);
-              }}
-              onDoubleClick={() => window.open('https://minatek.vn', '_blank')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                showWeb
-                  ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30'
-                  : 'bg-slate-900 border border-cyan-500/30 text-cyan-400 hover:bg-slate-800'
-              }`}
-            >
-              <Globe className="w-4 h-4 text-cyan-400" />
-              {showWeb ? <span className="text-xs">minatek.vn</span> : null}
-            </button>
-          </div>
+          <button
+            onClick={() => {
+              setShowWeb(!showWeb);
+              setShowPhone(false);
+            }}
+            onDoubleClick={() => window.open('https://minatek.vn', '_blank')}
+            className="bg-cyan-500 hover:bg-cyan-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm active:scale-95"
+            title="Nhấn đúp để mở minatek.vn"
+          >
+            <Radio className="w-4 h-4 text-white" />
+            {showWeb && (
+              <span className="text-white text-xs font-semibold ml-0.5 whitespace-nowrap animate-fade-in">
+                minatek.vn
+              </span>
+            )}
+          </button>
         </div>
       </div>
+
+      {/* Device Tabs Bar (matching Flutter TabBar in AppBar bottom) */}
+      {tabsData.length > 0 && (
+        <div className="px-2 pb-2.5 pt-1 overflow-x-auto no-scrollbar flex items-center gap-1.5 border-t border-slate-100/80">
+          {tabsData.map((tab, index) => {
+            const isActive = activeTabIndex === index;
+            return (
+              <button
+                key={tab.id || index}
+                onClick={() => onSelectTab && onSelectTab(index)}
+                onTouchStart={() => handleTouchStart(index)}
+                onTouchEnd={handleTouchEnd}
+                onMouseDown={() => handleTouchStart(index)}
+                onMouseUp={handleTouchEnd}
+                onMouseLeave={handleTouchEnd}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  if (onEditTab) onEditTab(index);
+                }}
+                className={`px-4 py-1.5 rounded-xl text-sm whitespace-nowrap transition-all duration-200 ${
+                  isActive
+                    ? 'bg-[#109bc5] text-white shadow-md font-bold scale-102'
+                    : 'text-[#426373] hover:bg-slate-100 font-medium'
+                }`}
+                title="Bấm giữ hoặc nhấp chuột phải để điều chỉnh/xóa thiết bị"
+              >
+                {tab.devicesName}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </header>
   );
 }
+

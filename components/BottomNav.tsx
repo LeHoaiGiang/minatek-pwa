@@ -3,78 +3,57 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, User, Cpu, RefreshCw } from 'lucide-react';
+import { Cpu, User, Plus } from 'lucide-react';
 
 interface BottomNavProps {
-  onOpenSimulator: () => void;
-  onRefresh: () => void;
+  onOpenSimulator?: () => void;
+  onRefresh?: () => void;
+  onAddDevice?: () => void;
 }
 
-export default function BottomNav({ onOpenSimulator, onRefresh }: BottomNavProps) {
+export default function BottomNav({ onOpenSimulator, onRefresh, onAddDevice }: BottomNavProps) {
   const pathname = usePathname();
 
-  const navItems = [
-    {
-      label: 'Giám Sát',
-      href: '/',
-      icon: LayoutDashboard,
-    },
-    {
-      label: 'Giả Lập',
-      onClick: onOpenSimulator,
-      icon: Cpu,
-    },
-    {
-      label: 'Tài Khoản',
-      href: '/user',
-      icon: User,
-    },
-  ];
+  const isHome = pathname === '/';
+  const isUser = pathname === '/user';
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/90 backdrop-blur-2xl border-t border-cyan-500/20 py-2 px-4 shadow-2xl">
-      <div className="max-w-md mx-auto flex items-center justify-around">
-        {navItems.map((item, idx) => {
-          const Icon = item.icon;
-          const isActive = item.href ? pathname === item.href : false;
-
-          if (item.href) {
-            return (
-              <Link
-                key={idx}
-                href={item.href}
-                className={`flex flex-col items-center gap-1 px-4 py-1.5 rounded-2xl transition-all duration-200 ${
-                  isActive
-                    ? 'text-cyan-400 bg-cyan-500/15 border border-cyan-400/30 shadow-lg shadow-cyan-500/10'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <Icon className={`w-5 h-5 ${isActive ? 'scale-110' : ''}`} />
-                <span className="text-[11px] font-semibold tracking-wide">{item.label}</span>
-              </Link>
-            );
-          }
-
-          return (
-            <button
-              key={idx}
-              onClick={item.onClick}
-              className="flex flex-col items-center gap-1 px-4 py-1.5 rounded-2xl text-slate-400 hover:text-cyan-400 transition-all duration-200"
-            >
-              <Icon className="w-5 h-5" />
-              <span className="text-[11px] font-semibold tracking-wide">{item.label}</span>
-            </button>
-          );
-        })}
-
-        <button
-          onClick={onRefresh}
-          className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-2xl text-slate-400 hover:text-cyan-400 transition-all active:rotate-180 duration-500"
-          title="Tải lại dữ liệu"
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white rounded-t-[40px] shadow-[0_-4px_20px_rgba(0,0,0,0.15)] h-[75px] safe-area-bottom">
+      <div className="max-w-md mx-auto h-full flex items-center justify-around relative px-4">
+        {/* Tab 1: Quản lý thiết bị (matching Flutter bottomNavBar.dart index 0) */}
+        <Link
+          href="/"
+          className="flex flex-col items-center justify-center gap-0.5"
         >
-          <RefreshCw className="w-5 h-5" />
-          <span className="text-[11px] font-semibold tracking-wide">Làm Mới</span>
-        </button>
+          <Cpu className={`w-[38px] h-[38px] transition-colors ${isHome ? 'text-cyan-500' : 'text-slate-500'}`} />
+          <span className={`text-[12px] font-semibold ${isHome ? 'text-cyan-600 font-bold' : 'text-slate-600'}`}>
+            Quản lý thiết bị
+          </span>
+        </Link>
+
+        {/* Floating Action Button (+) centered docked (matching Flutter default.dart FAB) */}
+        {onAddDevice && (
+          <div className="relative -top-6 flex flex-col items-center">
+            <button
+              onClick={onAddDevice}
+              className="w-[62px] h-[62px] bg-cyan-400 hover:bg-cyan-500 rounded-full flex items-center justify-center text-white shadow-lg active:scale-95 transition-all border-4 border-white"
+              title="Thêm thiết bị"
+            >
+              <Plus className="w-10 h-10 stroke-[2.5]" />
+            </button>
+          </div>
+        )}
+
+        {/* Tab 2: Dữ liệu người dùng (matching Flutter bottomNavBar.dart index 1) */}
+        <Link
+          href="/user"
+          className="flex flex-col items-center justify-center gap-0.5"
+        >
+          <User className={`w-[38px] h-[38px] transition-colors ${isUser ? 'text-cyan-500' : 'text-slate-500'}`} />
+          <span className={`text-[12px] font-semibold ${isUser ? 'text-cyan-600 font-bold' : 'text-slate-600'}`}>
+            Dữ liệu người dùng
+          </span>
+        </Link>
       </div>
     </nav>
   );

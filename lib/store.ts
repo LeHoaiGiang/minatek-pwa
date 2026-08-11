@@ -85,14 +85,39 @@ const defaultTabs: TabData[] = [
   },
 ];
 
-let globalTabs = [...defaultTabs];
+let globalTabs: TabData[] = [...defaultTabs];
+
+const saveToLocalStorage = (tabs: TabData[]) => {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('tabsData', JSON.stringify(tabs));
+    } catch (e) {
+      console.error('Failed saving tabsData to localStorage', e);
+    }
+  }
+};
 
 export const getMinatekTabs = (): TabData[] => {
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem('tabsData');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          globalTabs = parsed;
+          return globalTabs;
+        }
+      }
+    } catch (e) {
+      console.error('Failed reading tabsData from localStorage', e);
+    }
+  }
   return globalTabs;
 };
 
 export const setMinatekTabs = (tabs: TabData[]) => {
   globalTabs = tabs;
+  saveToLocalStorage(globalTabs);
   return globalTabs;
 };
 
@@ -100,6 +125,7 @@ export const toggleSwitchState = (tabIndex: number, switchIndex: number): TabDat
   if (globalTabs[tabIndex] && globalTabs[tabIndex].switches[switchIndex]) {
     globalTabs[tabIndex].switches[switchIndex].state = !globalTabs[tabIndex].switches[switchIndex].state;
   }
+  saveToLocalStorage(globalTabs);
   return [...globalTabs];
 };
 
@@ -113,6 +139,7 @@ export const addTab = (name: string): TabData[] => {
     switches: [],
   };
   globalTabs.push(newTab);
+  saveToLocalStorage(globalTabs);
   return [...globalTabs];
 };
 
@@ -120,6 +147,7 @@ export const updateTab = (index: number, name: string): TabData[] => {
   if (globalTabs[index]) {
     globalTabs[index].devicesName = name;
   }
+  saveToLocalStorage(globalTabs);
   return [...globalTabs];
 };
 
@@ -127,6 +155,7 @@ export const deleteTab = (index: number): TabData[] => {
   if (globalTabs[index]) {
     globalTabs.splice(index, 1);
   }
+  saveToLocalStorage(globalTabs);
   return [...globalTabs];
 };
 
@@ -139,6 +168,15 @@ export const addBigMonitor = (tabIndex: number, name: string): TabData[] => {
       value: 'Hoạt động',
     });
   }
+  saveToLocalStorage(globalTabs);
+  return [...globalTabs];
+};
+
+export const editBigMonitor = (tabIndex: number, monitorIndex: number, name: string): TabData[] => {
+  if (globalTabs[tabIndex] && globalTabs[tabIndex].bigMonitor[monitorIndex]) {
+    globalTabs[tabIndex].bigMonitor[monitorIndex].name = name;
+  }
+  saveToLocalStorage(globalTabs);
   return [...globalTabs];
 };
 
@@ -146,6 +184,7 @@ export const deleteBigMonitor = (tabIndex: number, monitorIndex: number): TabDat
   if (globalTabs[tabIndex] && globalTabs[tabIndex].bigMonitor[monitorIndex]) {
     globalTabs[tabIndex].bigMonitor.splice(monitorIndex, 1);
   }
+  saveToLocalStorage(globalTabs);
   return [...globalTabs];
 };
 
@@ -158,6 +197,15 @@ export const addSmallMonitor = (tabIndex: number, name: string): TabData[] => {
       type: 'sensor',
     });
   }
+  saveToLocalStorage(globalTabs);
+  return [...globalTabs];
+};
+
+export const editSmallMonitor = (tabIndex: number, monitorIndex: number, name: string): TabData[] => {
+  if (globalTabs[tabIndex] && globalTabs[tabIndex].smallMonitor[monitorIndex]) {
+    globalTabs[tabIndex].smallMonitor[monitorIndex].name = name;
+  }
+  saveToLocalStorage(globalTabs);
   return [...globalTabs];
 };
 
@@ -165,6 +213,7 @@ export const deleteSmallMonitor = (tabIndex: number, monitorIndex: number): TabD
   if (globalTabs[tabIndex] && globalTabs[tabIndex].smallMonitor[monitorIndex]) {
     globalTabs[tabIndex].smallMonitor.splice(monitorIndex, 1);
   }
+  saveToLocalStorage(globalTabs);
   return [...globalTabs];
 };
 
@@ -179,6 +228,15 @@ export const addSwitch = (tabIndex: number, name: string, bid?: number): TabData
       type: 'output',
     });
   }
+  saveToLocalStorage(globalTabs);
+  return [...globalTabs];
+};
+
+export const editSwitch = (tabIndex: number, switchIndex: number, name: string): TabData[] => {
+  if (globalTabs[tabIndex] && globalTabs[tabIndex].switches[switchIndex]) {
+    globalTabs[tabIndex].switches[switchIndex].name = name;
+  }
+  saveToLocalStorage(globalTabs);
   return [...globalTabs];
 };
 
@@ -186,5 +244,7 @@ export const deleteSwitch = (tabIndex: number, switchIndex: number): TabData[] =
   if (globalTabs[tabIndex] && globalTabs[tabIndex].switches[switchIndex]) {
     globalTabs[tabIndex].switches.splice(switchIndex, 1);
   }
+  saveToLocalStorage(globalTabs);
   return [...globalTabs];
 };
+

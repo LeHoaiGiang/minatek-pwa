@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
 import PwaInstaller from '@/components/PwaInstaller';
@@ -9,23 +10,30 @@ import {
   TabEditModal,
   AddMonitorModal,
   AddSwitchModal,
+  EditItemModal,
   QrScannerModal,
 } from '@/components/Modals';
-import { TabData } from '@/lib/store';
 import {
-  Plus,
-  Zap,
-  Activity,
-  CheckCircle2,
-  AlertCircle,
-  Sliders,
-  Radio,
-  Cpu,
-  Power,
-  ShieldCheck,
-} from 'lucide-react';
+  TabData,
+  getMinatekTabs,
+  addTab,
+  updateTab,
+  deleteTab,
+  addBigMonitor as addBigMonitorStore,
+  editBigMonitor as editBigMonitorStore,
+  deleteBigMonitor as deleteBigMonitorStore,
+  addSmallMonitor as addSmallMonitorStore,
+  editSmallMonitor as editSmallMonitorStore,
+  deleteSmallMonitor as deleteSmallMonitorStore,
+  addSwitch as addSwitchStore,
+  editSwitch as editSwitchStore,
+  deleteSwitch as deleteSwitchStore,
+  toggleSwitchState as toggleSwitchStore,
+} from '@/lib/store';
+import { Plus, Zap, Activity, Radio, Trash2, Edit2 } from 'lucide-react';
 
 export default function HomePage() {
+  const router = useRouter();
   const [tabsData, setTabsData] = useState<TabData[]>([]);
   const [activeTabIndex, setActiveTabIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -35,55 +43,80 @@ export default function HomePage() {
   const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
   const [isTabModalOpen, setIsTabModalOpen] = useState(false);
   const [isEditTab, setIsEditTab] = useState(false);
+  
   const [isBigMonitorModalOpen, setIsBigMonitorModalOpen] = useState(false);
   const [isSmallMonitorModalOpen, setIsSmallMonitorModalOpen] = useState(false);
   const [isSwitchModalOpen, setIsSwitchModalOpen] = useState(false);
 
-  // Fetch initial control data from API
+  // Item editing modal states (Long press / edit dialog)
+  const [editingItemType, setEditingItemType] = useState<'big' | 'small' | 'switch' | null>(null);
+  const [editingItemIndex, setEditingItemIndex] = useState<number>(-1);
+  const [editingInitialName, setEditingInitialName] = useState<string>('');
+
+  const touchTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const startLongPress = (type: 'big' | 'small' | 'switch', index: number, initialName: string) => {
+    touchTimerRef.current = setTimeout(() => {
+      setEditingItemType(type);
+      setEditingItemIndex(index);
+      setEditingInitialName(initialName);
+    }, 600);
+  };
+
+  const cancelLongPress = () => {
+    if (touchTimerRef.current) {
+      clearTimeout(touchTimerRef.current);
+      touchTimerRef.current = null;
+    }
+  };
+
+  // Fetch initial control data with localStorage fallback
   const fetchControlData = async () => {
     try {
       setLoading(true);
+      const localData = getMinatekTabs();
+      setTabsData(localData);
+
       const res = await fetch('/api/control');
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setTabsData(data);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setTabsData(data);
+        }
       }
     } catch (error) {
-      console.error('Failed fetching Minatek control data:', error);
+      console.warn('Backend API unavailable, using offline localStorage:', error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    const token = localStorage.getItem('minatek_token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
     fetchControlData();
-  }, []);
+  }, [router]);
 
-  // Post control actions to serverless backend
+  // Sync actions with serverless API asynchronously
   const sendControlAction = async (payload: any) => {
     try {
-      const res = await fetch('/api/control', {
+      await fetch('/api/control', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      const updatedData = await res.json();
-      if (Array.isArray(updatedData)) {
-        setTabsData(updatedData);
-      }
     } catch (error) {
-      console.error('Action error:', error);
+      console.warn('API action post failed, stored locally:', error);
     }
   };
 
-  // Toggle Switch state with optimistic UI
+  // Toggle Switch state
   const handleToggleSwitch = (subIndex: number) => {
-    // Optimistic local update
-    const copy = [...tabsData];
-    if (copy[activeTabIndex]?.switches[subIndex]) {
-      copy[activeTabIndex].switches[subIndex].state = !copy[activeTabIndex].switches[subIndex].state;
-      setTabsData(copy);
-    }
+    const updated = toggleSwitchStore(activeTabIndex, subIndex);
+    setTabsData([...updated]);
     sendControlAction({
       action: 'toggle_switch',
       tabIndex: activeTabIndex,
@@ -106,291 +139,183 @@ export default function HomePage() {
         copy[activeTabIndex].state = !payload.active;
         setTabsData(copy);
       }
-    } else if (eventType === 'lwt_disconnect') {
-      const copy = [...tabsData];
-      if (copy[activeTabIndex]) {
-        copy[activeTabIndex].state = false;
-        setTabsData(copy);
-      }
     }
   };
 
   const currentTab = tabsData[activeTabIndex] || null;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 pb-28 pt-0 font-sans selection:bg-cyan-500">
-      {/* PWA Installation Banner */}
-      <PwaInstaller />
-
-      {/* App Header */}
+    <div className="min-h-screen bg-gradient-to-b from-[#73c1d9] via-[#66b0c7] to-[#2a849f] text-slate-800 pb-28 pt-0 font-sans select-none">
+      {/* Header AppBar matching Flutter Mobile App */}
       <Header
         onOpenSimulator={() => setIsSimulatorOpen(true)}
         onOpenQrScanner={() => setIsQrScannerOpen(true)}
+        tabsData={tabsData}
+        activeTabIndex={activeTabIndex}
+        onSelectTab={(idx) => setActiveTabIndex(idx)}
+        onEditTab={(idx) => {
+          setActiveTabIndex(idx);
+          setIsEditTab(true);
+          setIsTabModalOpen(true);
+        }}
       />
 
-      <main className="max-w-6xl mx-auto px-4 pt-4 space-y-6">
-        {/* Device / Zone Tab Navigation Bar */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-          {tabsData.map((tab, idx) => {
-            const isActive = idx === activeTabIndex;
-            return (
-              <button
-                key={tab.id || idx}
-                onClick={() => setActiveTabIndex(idx)}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  setActiveTabIndex(idx);
-                  setIsEditTab(true);
-                  setIsTabModalOpen(true);
-                }}
-                className={`px-4 py-2.5 rounded-2xl text-sm font-bold transition-all whitespace-nowrap flex items-center gap-2 border shadow-lg ${
-                  isActive
-                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white border-cyan-300 shadow-cyan-500/30 scale-102'
-                    : 'bg-slate-900/80 text-slate-300 border-slate-800 hover:border-cyan-500/40 hover:text-white'
-                }`}
-              >
-                <div
-                  className={`w-2.5 h-2.5 rounded-full ${
-                    tab.state ? 'bg-emerald-400 shadow-[0_0_8px_#34d399]' : 'bg-rose-500'
-                  }`}
-                />
-                <span>{tab.devicesName}</span>
-              </button>
-            );
-          })}
-
-          <button
-            onClick={() => {
-              setIsEditTab(false);
-              setIsTabModalOpen(true);
-            }}
-            className="p-2.5 bg-slate-900/90 border border-cyan-500/40 text-cyan-400 rounded-2xl hover:bg-cyan-500/20 hover:border-cyan-400 transition-all flex items-center gap-1 shadow-md"
-            title="Thêm khu vực/tủ điện mới"
-          >
-            <Plus className="w-5 h-5" />
-            <span className="text-xs font-bold pr-1">Thêm Tủ</span>
-          </button>
-        </div>
+      {/* Main Body View */}
+      <main className="max-w-xl mx-auto px-2 pt-3 space-y-3">
+        {/* PWA Installation Banner */}
+        <PwaInstaller />
 
         {loading ? (
-          <div className="py-20 text-center space-y-3">
-            <Cpu className="w-10 h-10 text-cyan-400 animate-spin mx-auto" />
-            <p className="text-sm font-semibold text-cyan-300">Đang kết nối hệ thống Minatek PWA...</p>
+          <div className="flex flex-col items-center justify-center py-20 text-white space-y-3">
+            <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-sm font-semibold">Đang tải dữ liệu từ Server Minatek...</p>
           </div>
         ) : currentTab ? (
-          <div className="space-y-6 animate-fade-in">
-            {/* Section 1: GIÁM SÁT TRẠNG THÁI (Status Monitor Panel) */}
-            <section className="glass-panel p-5 border border-cyan-500/30 shadow-xl space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-bold text-white flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-cyan-400" />
-                  <span>Giám Sát Trạng Thái IoT</span>
-                </h2>
-                <span className="text-[11px] font-semibold bg-cyan-500/10 text-cyan-300 px-2.5 py-1 rounded-full border border-cyan-400/30">
-                  {currentTab.bigMonitor.length + currentTab.smallMonitor.length} Cảm biến
-                </span>
-              </div>
+          <div className="space-y-3">
+            {/* Section 1: Big Monitor Card (Matching Flutter home.dart lines 179-314) */}
+            <section className="bg-cyan-200/30 rounded-[20px] p-3 text-white border border-white/20">
+              <h2 className="text-lg font-semibold text-white text-center mb-2 font-sans">
+                Giám sát trạng thái
+              </h2>
 
-              {/* Big Monitor Cards Grid */}
-              <div className="space-y-2">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-                  Thiết Bị Lớn (Big Monitor)
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {currentTab.bigMonitor.map((item, subIdx) => (
-                    <div
-                      key={item.id || subIdx}
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        if (confirm(`Xóa giám sát "${item.name}"?`)) {
-                          sendControlAction({
-                            action: 'delete_big_monitor',
-                            tabIndex: activeTabIndex,
-                            subIndex: subIdx,
-                          });
-                        }
-                      }}
-                      className="glass-panel p-4 border border-cyan-500/20 bg-slate-900/70 hover:border-cyan-400/50 transition-all flex items-center justify-between gap-3 group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-3.5 h-3.5 rounded-full ${
-                            item.state
-                              ? 'bg-emerald-400 shadow-[0_0_12px_#34d399] pulse-indicator'
-                              : 'bg-rose-500'
-                          }`}
-                        />
-                        <div>
-                          <h3 className="text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">
-                            {item.name}
-                          </h3>
-                          <p className="text-xs text-cyan-400/90 font-medium">
-                            {item.value || (item.state ? 'Hoạt động ổn định' : 'Tạm dừng')}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-
-                  <button
-                    onClick={() => setIsBigMonitorModalOpen(true)}
-                    className="p-4 rounded-2xl border border-dashed border-cyan-500/40 bg-slate-900/40 text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all flex items-center justify-center gap-2 font-semibold text-xs min-h-[72px]"
+              <div className="overflow-x-auto no-scrollbar flex items-center gap-3 py-1 px-1">
+                {currentTab.bigMonitor && currentTab.bigMonitor.map((bm, bIdx) => (
+                  <div
+                    key={bm.id || bIdx}
+                    onTouchStart={() => startLongPress('big', bIdx, bm.name)}
+                    onTouchEnd={cancelLongPress}
+                    onMouseDown={() => startLongPress('big', bIdx, bm.name)}
+                    onMouseUp={cancelLongPress}
+                    onMouseLeave={cancelLongPress}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      setEditingItemType('big');
+                      setEditingItemIndex(bIdx);
+                      setEditingInitialName(bm.name);
+                    }}
+                    className="bg-gradient-to-r from-[#02cce7] via-[#01b2c9] to-[#00b2c1] text-white rounded-[20px] p-3 shadow-md min-w-[210px] shrink-0 flex items-center gap-2.5 relative active:scale-98 transition-transform"
                   >
-                    <Plus className="w-4 h-4" /> Thêm Giám Sát Lớn
-                  </button>
-                </div>
-              </div>
-
-              {/* Small Monitor Cards Horizontal List */}
-              <div className="space-y-2 pt-2">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-                  Cảm Biến Nhỏ (Small Monitor)
-                </span>
-                <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
-                  {currentTab.smallMonitor.map((item, subIdx) => (
                     <div
-                      key={item.id || subIdx}
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        if (confirm(`Xóa cảm biến "${item.name}"?`)) {
-                          sendControlAction({
-                            action: 'delete_small_monitor',
-                            tabIndex: activeTabIndex,
-                            subIndex: subIdx,
-                          });
-                        }
-                      }}
-                      className="px-4 py-3 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-800 border border-cyan-500/30 flex items-center gap-3 whitespace-nowrap shadow-md"
-                    >
-                      <div
-                        className={`w-3 h-3 rounded-full ${
-                          item.state ? 'bg-emerald-400 shadow-[0_0_8px_#34d399]' : 'bg-rose-500'
-                        }`}
-                      />
-                      <span className="text-xs font-bold text-white">{item.name}</span>
-                    </div>
-                  ))}
-
-                  <button
-                    onClick={() => setIsSmallMonitorModalOpen(true)}
-                    className="px-4 py-3 rounded-2xl border border-dashed border-cyan-500/40 bg-slate-900/40 text-cyan-400 hover:bg-cyan-500/10 transition-all flex items-center gap-1.5 font-semibold text-xs whitespace-nowrap"
-                  >
-                    <Plus className="w-4 h-4" /> Thêm Cảm Biến Nhỏ
-                  </button>
-                </div>
-              </div>
-            </section>
-
-            {/* Section 2: CÔNG TẮC ĐIỀU KHIỂN (Switches Control Board) */}
-            <section className="glass-panel p-5 border border-cyan-500/30 shadow-xl space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-bold text-white flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-amber-400" />
-                  <span>Công Tắc Điều Khiển Thời Gian Thực</span>
-                </h2>
-                <span className="text-[11px] font-semibold bg-amber-500/10 text-amber-300 px-2.5 py-1 rounded-full border border-amber-400/30">
-                  {currentTab.switches.filter((s) => s.state).length} / {currentTab.switches.length} Bật
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">
-                {currentTab.switches.map((item, subIdx) => {
-                  const isOn = item.state;
-                  return (
-                    <button
-                      key={item.id || subIdx}
-                      onClick={() => handleToggleSwitch(subIdx)}
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        if (confirm(`Xóa công tắc "${item.name}"?`)) {
-                          sendControlAction({
-                            action: 'delete_switch',
-                            tabIndex: activeTabIndex,
-                            subIndex: subIdx,
-                          });
-                        }
-                      }}
-                      className={`p-4 rounded-2xl border flex flex-col items-center justify-center text-center transition-all duration-300 active:scale-95 shadow-lg relative overflow-hidden group ${
-                        isOn
-                          ? 'bg-gradient-to-br from-cyan-500 via-cyan-600 to-blue-600 border-cyan-300 text-white shadow-cyan-500/40 ring-2 ring-cyan-400/50'
-                          : 'bg-slate-900/90 border-slate-800 text-slate-400 hover:border-cyan-500/40 hover:text-slate-200'
+                      className={`w-5 h-5 rounded-full shrink-0 border border-white/40 shadow-sm ${
+                        bm.state ? 'bg-[#4AD54E] animate-pulse' : 'bg-rose-500'
                       }`}
-                    >
-                      <div
-                        className={`p-3 rounded-full mb-2 transition-transform duration-300 group-hover:scale-110 ${
-                          isOn ? 'bg-white/20 text-white shadow-inner' : 'bg-slate-800 text-slate-500'
-                        }`}
-                      >
-                        <Power className={`w-6 h-6 ${isOn ? 'animate-pulse' : ''}`} />
+                    ></div>
+                    <div className="flex flex-col justify-center">
+                      <div className="text-base font-semibold text-white leading-tight">
+                        {bm.name}
                       </div>
-                      <span className="text-sm font-bold line-clamp-1">{item.name}</span>
-                      <span className="text-[10px] font-mono mt-1 opacity-80">BID: #{item.bid}</span>
-                      <span
-                        className={`text-[10px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-full mt-2 ${
-                          isOn ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-500'
-                        }`}
-                      >
-                        {isOn ? 'BẬT (ON)' : 'TẮT (OFF)'}
-                      </span>
-                    </button>
-                  );
-                })}
+                      <div className="text-xs font-medium text-cyan-100">
+                        {bm.state ? (bm.value || 'Hoạt động') : 'Tạm dừng'}
+                      </div>
+                    </div>
+                  </div>
+                ))}
 
+                {/* Add Big Monitor Button (+) */}
                 <button
-                  onClick={() => setIsSwitchModalOpen(true)}
-                  className="p-5 rounded-2xl border border-dashed border-amber-500/40 bg-slate-900/40 text-amber-400 hover:bg-amber-500/10 hover:border-amber-400 transition-all flex flex-col items-center justify-center gap-2 font-semibold text-xs min-h-[140px]"
+                  onClick={() => setIsBigMonitorModalOpen(true)}
+                  className="bg-cyan-500 hover:bg-cyan-600 active:scale-95 text-white rounded-[20px] h-[64px] min-w-[64px] flex items-center justify-center shadow-md transition-all shrink-0"
+                  title="Thêm giám sát trạng thái"
                 >
-                  <Plus className="w-6 h-6" />
-                  <span>Thêm Công Tắc</span>
+                  <Plus className="w-8 h-8 stroke-[2.5]" />
+                </button>
+              </div>
+
+              {/* Section 2: Small Monitor / Sensors (Matching Flutter home.dart lines 315-407) */}
+              <div className="mt-3 overflow-x-auto no-scrollbar flex items-center gap-2 py-1 px-1">
+                {currentTab.smallMonitor && currentTab.smallMonitor.map((sm, sIdx) => (
+                  <div
+                    key={sm.id || sIdx}
+                    onTouchStart={() => startLongPress('small', sIdx, sm.name)}
+                    onTouchEnd={cancelLongPress}
+                    onMouseDown={() => startLongPress('small', sIdx, sm.name)}
+                    onMouseUp={cancelLongPress}
+                    onMouseLeave={cancelLongPress}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      setEditingItemType('small');
+                      setEditingItemIndex(sIdx);
+                      setEditingInitialName(sm.name);
+                    }}
+                    className="bg-gradient-to-r from-[#02cce7] via-[#01b2c9] to-[#01aac1] text-white rounded-[20px] p-3 shadow-md min-w-[130px] shrink-0 flex flex-col items-center justify-center text-center space-y-1.5 active:scale-98 transition-transform"
+                  >
+                    <div className="text-sm font-semibold text-white leading-tight">
+                      {sm.name}
+                    </div>
+                    <div
+                      className={`w-5 h-5 rounded-full border border-white/40 shadow-sm ${
+                        sm.state ? 'bg-[#4AD54E] animate-pulse' : 'bg-rose-500'
+                      }`}
+                    ></div>
+                  </div>
+                ))}
+
+                {/* Add Small Monitor Button (+) */}
+                <button
+                  onClick={() => setIsSmallMonitorModalOpen(true)}
+                  className="bg-cyan-500 hover:bg-cyan-600 active:scale-95 text-white rounded-[20px] h-[55px] min-w-[55px] flex items-center justify-center shadow-md transition-all shrink-0"
+                  title="Thêm cảm biến nhỏ"
+                >
+                  <Plus className="w-7 h-7 stroke-[2.5]" />
                 </button>
               </div>
             </section>
 
-            {/* Section 3: TRẠNG THÁI HỆ THỐNG (System Status Footer Box) */}
-            <section className="glass-panel p-5 border border-slate-800 bg-slate-900/60 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div
-                  className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold shadow-lg ${
-                    currentTab.state
-                      ? 'bg-gradient-to-tr from-emerald-500 to-teal-600 shadow-emerald-500/30'
-                      : 'bg-rose-600 shadow-rose-600/30'
-                  }`}
-                >
-                  {currentTab.state ? (
-                    <CheckCircle2 className="w-7 h-7" />
-                  ) : (
-                    <AlertCircle className="w-7 h-7" />
-                  )}
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                    <span>{currentTab.devicesName}</span>
-                    <span className="text-[10px] text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-400/30 font-mono">
-                      ONLINE
-                    </span>
-                  </h3>
-                  <p className="text-xs text-slate-400">
-                    Kết nối MQTT Broker: Stable | Đỗ trễ: 12ms | Độ tin cậy: 99.9%
-                  </p>
-                </div>
-              </div>
+            {/* Section 3: Switches Control Grid (Matching Flutter home.dart lines 408-500) */}
+            <section className="bg-cyan-200/30 rounded-[20px] p-3 text-white border border-white/20 space-y-2">
+              <h3 className="text-lg font-semibold text-white text-center font-sans">
+                Công tắc điều khiển
+              </h3>
 
-              <button
-                onClick={() => setIsSimulatorOpen(true)}
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-cyan-300 text-xs font-bold rounded-xl flex items-center gap-2 transition-all"
-              >
-                <Sliders className="w-4 h-4 text-cyan-400" />
-                <span>Cấu Hình Tủ Điện</span>
-              </button>
+              <div className="overflow-x-auto no-scrollbar flex items-center gap-3 py-1 px-1">
+                {currentTab.switches && currentTab.switches.map((sw, swIdx) => (
+                  <button
+                    key={sw.id || swIdx}
+                    onClick={() => handleToggleSwitch(swIdx)}
+                    onTouchStart={() => startLongPress('switch', swIdx, sw.name)}
+                    onTouchEnd={cancelLongPress}
+                    onMouseDown={() => startLongPress('switch', swIdx, sw.name)}
+                    onMouseUp={cancelLongPress}
+                    onMouseLeave={cancelLongPress}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      setEditingItemType('switch');
+                      setEditingItemIndex(swIdx);
+                      setEditingInitialName(sw.name);
+                    }}
+                    className={`rounded-[30px] px-5 py-3 h-[90px] min-w-[120px] shrink-0 flex flex-col items-center justify-center space-y-1 transition-all duration-300 active:scale-95 shadow-md ${
+                      sw.state ? 'bg-[#01cce7]' : 'bg-[#008495]'
+                    }`}
+                  >
+                    <Zap className={`w-8 h-8 ${sw.state ? 'text-amber-300 fill-amber-300' : 'text-white'}`} />
+                    <span className="text-sm font-semibold text-white whitespace-nowrap">
+                      {sw.name}
+                    </span>
+                  </button>
+                ))}
+
+                {/* Add Switch Button (+) */}
+                <button
+                  onClick={() => setIsSwitchModalOpen(true)}
+                  className="bg-cyan-500 hover:bg-cyan-600 active:scale-95 text-white rounded-[30px] h-[90px] min-w-[70px] flex items-center justify-center shadow-md transition-all shrink-0"
+                  title="Thêm công tắc điều khiển"
+                >
+                  <Plus className="w-8 h-8 stroke-[2.5]" />
+                </button>
+              </div>
             </section>
           </div>
         ) : null}
       </main>
 
-      {/* Bottom Navigation */}
+      {/* Bottom Navigation matching Flutter default.dart */}
       <BottomNav
         onOpenSimulator={() => setIsSimulatorOpen(true)}
         onRefresh={fetchControlData}
+        onAddDevice={() => {
+          setIsEditTab(false);
+          setIsTabModalOpen(true);
+        }}
       />
 
       {/* Modals */}
@@ -404,10 +329,11 @@ export default function HomePage() {
         isOpen={isQrScannerOpen}
         onClose={() => setIsQrScannerOpen(false)}
         onScanned={(deviceId) => {
-          alert(`Đã quét mã thành công! Đã kết nối tới thiết bị ID: ${deviceId}`);
+          alert(`Đã kết nối mã QR thiết bị ID: ${deviceId}`);
         }}
       />
 
+      {/* Edit Tab / Add Device Modal */}
       <TabEditModal
         isOpen={isTabModalOpen}
         onClose={() => setIsTabModalOpen(false)}
@@ -415,65 +341,104 @@ export default function HomePage() {
         initialName={isEditTab && currentTab ? currentTab.devicesName : ''}
         onSave={(name) => {
           if (isEditTab) {
-            sendControlAction({
-              action: 'edit_tab',
-              tabIndex: activeTabIndex,
-              name,
-            });
+            const updated = updateTab(activeTabIndex, name);
+            setTabsData([...updated]);
+            sendControlAction({ action: 'edit_tab', tabIndex: activeTabIndex, name });
           } else {
-            sendControlAction({
-              action: 'add_tab',
-              name,
-            });
+            const updated = addTab(name);
+            setTabsData([...updated]);
+            setActiveTabIndex(updated.length - 1);
+            sendControlAction({ action: 'add_tab', name });
           }
         }}
         onDelete={() => {
-          sendControlAction({
-            action: 'delete_tab',
-            tabIndex: activeTabIndex,
-          });
+          const updated = deleteTab(activeTabIndex);
+          setTabsData([...updated]);
           setActiveTabIndex(0);
+          sendControlAction({ action: 'delete_tab', tabIndex: activeTabIndex });
         }}
       />
 
+      {/* Add Big Monitor Modal */}
       <AddMonitorModal
         isOpen={isBigMonitorModalOpen}
         onClose={() => setIsBigMonitorModalOpen(false)}
-        title="Thêm Thiết Bị Giám Sát Lớn (Big Monitor)"
+        title="Thêm thiết bị giám sát lớn"
         onSave={(name) => {
-          sendControlAction({
-            action: 'add_big_monitor',
-            tabIndex: activeTabIndex,
-            name,
-          });
+          const updated = addBigMonitorStore(activeTabIndex, name);
+          setTabsData([...updated]);
+          sendControlAction({ action: 'add_big_monitor', tabIndex: activeTabIndex, name });
         }}
       />
 
+      {/* Add Small Monitor Modal */}
       <AddMonitorModal
         isOpen={isSmallMonitorModalOpen}
         onClose={() => setIsSmallMonitorModalOpen(false)}
-        title="Thêm Cảm Biến Nhỏ (Small Monitor)"
+        title="Thêm cảm biến nhỏ"
         onSave={(name) => {
-          sendControlAction({
-            action: 'add_small_monitor',
-            tabIndex: activeTabIndex,
-            name,
-          });
+          const updated = addSmallMonitorStore(activeTabIndex, name);
+          setTabsData([...updated]);
+          sendControlAction({ action: 'add_small_monitor', tabIndex: activeTabIndex, name });
         }}
       />
 
+      {/* Add Switch Modal */}
       <AddSwitchModal
         isOpen={isSwitchModalOpen}
         onClose={() => setIsSwitchModalOpen(false)}
         onSave={(name, bid) => {
-          sendControlAction({
-            action: 'add_switch',
-            tabIndex: activeTabIndex,
-            name,
-            bid,
-          });
+          const updated = addSwitchStore(activeTabIndex, name, bid);
+          setTabsData([...updated]);
+          sendControlAction({ action: 'add_switch', tabIndex: activeTabIndex, name, bid });
         }}
       />
+
+      {/* Generic Item Edit/Delete Modal (for Long Press / Context Menu) */}
+      {editingItemType && (
+        <EditItemModal
+          isOpen={!!editingItemType}
+          onClose={() => setEditingItemType(null)}
+          initialName={editingInitialName}
+          title={
+            editingItemType === 'big'
+              ? 'Điều chỉnh giám sát lớn'
+              : editingItemType === 'small'
+              ? 'Điều chỉnh cảm biến'
+              : 'Điều chỉnh công tắc'
+          }
+          onSave={(newName) => {
+            if (editingItemType === 'big') {
+              const updated = editBigMonitorStore(activeTabIndex, editingItemIndex, newName);
+              setTabsData([...updated]);
+            } else if (editingItemType === 'small') {
+              const updated = editSmallMonitorStore(activeTabIndex, editingItemIndex, newName);
+              setTabsData([...updated]);
+            } else if (editingItemType === 'switch') {
+              const updated = editSwitchStore(activeTabIndex, editingItemIndex, newName);
+              setTabsData([...updated]);
+            }
+            setEditingItemType(null);
+          }}
+          onDelete={() => {
+            if (editingItemType === 'big') {
+              const updated = deleteBigMonitorStore(activeTabIndex, editingItemIndex);
+              setTabsData([...updated]);
+              sendControlAction({ action: 'delete_big_monitor', tabIndex: activeTabIndex, subIndex: editingItemIndex });
+            } else if (editingItemType === 'small') {
+              const updated = deleteSmallMonitorStore(activeTabIndex, editingItemIndex);
+              setTabsData([...updated]);
+              sendControlAction({ action: 'delete_small_monitor', tabIndex: activeTabIndex, subIndex: editingItemIndex });
+            } else if (editingItemType === 'switch') {
+              const updated = deleteSwitchStore(activeTabIndex, editingItemIndex);
+              setTabsData([...updated]);
+              sendControlAction({ action: 'delete_switch', tabIndex: activeTabIndex, subIndex: editingItemIndex });
+            }
+            setEditingItemType(null);
+          }}
+        />
+      )}
     </div>
   );
 }
+

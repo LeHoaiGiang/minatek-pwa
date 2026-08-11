@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Plus, Edit2, Trash2, QrCode, ShieldCheck } from 'lucide-react';
+import { X, Trash2, QrCode, ShieldCheck } from 'lucide-react';
 
-// Dynamic Modal Generic Wrapper
+// Dynamic Modal Generic Wrapper (Matching Flutter EasyDialog style)
 export function ModalBase({
   isOpen,
   onClose,
@@ -18,22 +18,22 @@ export function ModalBase({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-      <div className="glass-panel w-full max-w-md p-6 border border-cyan-500/40 shadow-2xl relative bg-slate-900/95 text-white rounded-3xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fade-in">
+      <div className="bg-white w-full max-w-md p-6 border-0 shadow-2xl relative text-slate-800 rounded-[25px] space-y-4">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors"
+          className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-slate-700 rounded-lg transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
-        <h3 className="text-lg font-bold text-white mb-4 pr-6">{title}</h3>
+        <h3 className="text-xl font-extrabold text-slate-900 mb-2 pr-6">{title}</h3>
         {children}
       </div>
     </div>
   );
 }
 
-// Add/Edit Tab Modal
+// Add/Edit Tab Modal (Matching Flutter default.dart addingDevices & editDevices dialogs)
 export function TabEditModal({
   isOpen,
   onClose,
@@ -52,7 +52,7 @@ export function TabEditModal({
   const [name, setName] = useState(initialName);
 
   return (
-    <ModalBase isOpen={isOpen} onClose={onClose} title={isEdit ? 'Chỉnh Sửa Tủ/Khu Vực' : 'Thêm Tủ/Khu Vực Mới'}>
+    <ModalBase isOpen={isOpen} onClose={onClose} title={isEdit ? 'Điều chỉnh thiết bị' : 'Thêm thiết bị'}>
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -64,13 +64,13 @@ export function TabEditModal({
         className="space-y-4"
       >
         <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1.5">Tên Thiết Bị / Khu Vực</label>
+          <label className="block text-xs font-bold text-slate-700 mb-1.5">Tên Thiết Bị / Tủ Điện</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Ví dụ: Tủ Điện Phụ 02, Máy Bơm Khu A..."
-            className="w-full bg-slate-800 border border-cyan-500/30 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-cyan-400"
+            placeholder="Ví dụ: Tủ Điện Trung Tâm 01, Chiếu Sáng KCN..."
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-800 focus:outline-none focus:border-cyan-500"
             autoFocus
           />
         </div>
@@ -82,7 +82,7 @@ export function TabEditModal({
                 onDelete();
                 onClose();
               }}
-              className="px-4 py-2.5 bg-rose-600/80 hover:bg-rose-600 text-white text-xs font-bold rounded-xl flex items-center gap-1.5"
+              className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl flex items-center gap-1 shadow-sm"
             >
               <Trash2 className="w-4 h-4" /> Xóa
             </button>
@@ -91,15 +91,15 @@ export function TabEditModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl"
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-xl"
             >
               Hủy
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-cyan-600/30"
+              className="px-5 py-2 bg-cyan-500 hover:bg-cyan-600 text-white text-xs font-bold rounded-xl shadow-md"
             >
-              Lưu Thành Công
+              Đồng ý
             </button>
           </div>
         </div>
@@ -108,7 +108,7 @@ export function TabEditModal({
   );
 }
 
-// Add Monitor Modal
+// Add Big/Small Monitor Modal
 export function AddMonitorModal({
   isOpen,
   onClose,
@@ -136,13 +136,13 @@ export function AddMonitorModal({
         className="space-y-4"
       >
         <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1.5">Tên Thiết Bị Giám Sát</label>
+          <label className="block text-xs font-bold text-slate-700 mb-1.5">Tên Cảm Biến / Màn Hình</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Ví dụ: Cảm Biến Áp Lực, Máy Nén Khí..."
-            className="w-full bg-slate-800 border border-cyan-500/30 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-cyan-400"
+            placeholder="Nhập tên giám sát..."
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-800 focus:outline-none focus:border-cyan-500"
             autoFocus
           />
         </div>
@@ -150,15 +150,15 @@ export function AddMonitorModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2.5 bg-slate-800 text-slate-300 text-xs font-semibold rounded-xl"
+            className="px-4 py-2 bg-slate-100 text-slate-600 text-xs font-semibold rounded-xl"
           >
             Hủy
           </button>
           <button
             type="submit"
-            className="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-cyan-600/30"
+            className="px-5 py-2 bg-cyan-500 hover:bg-cyan-600 text-white text-xs font-bold rounded-xl shadow-md"
           >
-            Thêm Ngay
+            Xác Nhận
           </button>
         </div>
       </form>
@@ -166,7 +166,7 @@ export function AddMonitorModal({
   );
 }
 
-// Add Switch Modal
+// Add Switch Control Modal
 export function AddSwitchModal({
   isOpen,
   onClose,
@@ -174,7 +174,7 @@ export function AddSwitchModal({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (name: string, bid?: number) => void;
+  onSave: (name: string, bid: number) => void;
 }) {
   const [name, setName] = useState('');
   const [bid, setBid] = useState<number>(1);
@@ -193,39 +193,112 @@ export function AddSwitchModal({
         className="space-y-4"
       >
         <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1.5">Tên Công Tắc</label>
+          <label className="block text-xs font-bold text-slate-700 mb-1.5">Tên Công Tắc</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Ví dụ: Công Tắc Đèn Xưởng 03, Van Xả..."
-            className="w-full bg-slate-800 border border-cyan-500/30 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-cyan-400"
+            placeholder="Ví dụ: Đèn Xưởng 01, Bơm Phụ..."
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-800 focus:outline-none focus:border-cyan-500"
             autoFocus
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1.5">Mã Kênh BID (Board ID)</label>
+          <label className="block text-xs font-bold text-slate-700 mb-1.5">Mã Kênh BID (Board ID)</label>
           <input
             type="number"
             value={bid}
             onChange={(e) => setBid(Number(e.target.value))}
-            className="w-full bg-slate-800 border border-cyan-500/30 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-cyan-400"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-800 focus:outline-none focus:border-cyan-500"
           />
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2.5 bg-slate-800 text-slate-300 text-xs font-semibold rounded-xl"
+            className="px-4 py-2 bg-slate-100 text-slate-600 text-xs font-semibold rounded-xl"
           >
             Hủy
           </button>
           <button
             type="submit"
-            className="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-cyan-600/30"
+            className="px-5 py-2 bg-cyan-500 hover:bg-cyan-600 text-white text-xs font-bold rounded-xl shadow-md"
           >
             Tạo Công Tắc
           </button>
+        </div>
+      </form>
+    </ModalBase>
+  );
+}
+
+// Generic Edit/Delete Item Modal (Matching Flutter modifyBigMonitor, modifySmallMonitor, modifySwitchMonitor)
+export function EditItemModal({
+  isOpen,
+  onClose,
+  onSave,
+  onDelete,
+  title,
+  initialName = '',
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (name: string) => void;
+  onDelete: () => void;
+  title: string;
+  initialName?: string;
+}) {
+  const [name, setName] = useState(initialName);
+
+  return (
+    <ModalBase isOpen={isOpen} onClose={onClose} title={title}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (name.trim()) {
+            onSave(name.trim());
+            onClose();
+          }
+        }}
+        className="space-y-4"
+      >
+        <div>
+          <label className="block text-xs font-bold text-slate-700 mb-1.5">Tên Cần Chỉnh Sửa</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Nhập tên mới..."
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-800 focus:outline-none focus:border-cyan-500"
+            autoFocus
+          />
+        </div>
+        <div className="flex items-center justify-between gap-3 pt-2">
+          <button
+            type="button"
+            onClick={() => {
+              onDelete();
+              onClose();
+            }}
+            className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl flex items-center gap-1 shadow-sm"
+          >
+            <Trash2 className="w-4 h-4" /> Xóa
+          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-xl"
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 bg-cyan-500 hover:bg-cyan-600 text-white text-xs font-bold rounded-xl shadow-md"
+            >
+              Đồng Ý
+            </button>
+          </div>
         </div>
       </form>
     </ModalBase>
@@ -257,25 +330,26 @@ export function QrScannerModal({
 
   return (
     <ModalBase isOpen={isOpen} onClose={onClose} title="Quét Mã QR Kết Nối Thiết Bị IoT">
-      <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
-        <div className="relative w-48 h-48 bg-slate-950 border-2 border-cyan-400/60 rounded-3xl flex items-center justify-center overflow-hidden shadow-2xl">
-          <QrCode className="w-28 h-28 text-cyan-400/80 animate-pulse" />
+      <div className="flex flex-col items-center justify-center p-4 text-center space-y-4">
+        <div className="relative w-48 h-48 bg-slate-900 border-4 border-cyan-500 rounded-2xl flex items-center justify-center overflow-hidden shadow-md">
+          <QrCode className="w-28 h-28 text-cyan-400 animate-pulse" />
           {scanning && (
-            <div className="absolute inset-0 bg-cyan-500/20 border-t-4 border-cyan-400 animate-scan"></div>
+            <div className="absolute inset-0 bg-cyan-500/30 border-t-4 border-cyan-400 animate-scan"></div>
           )}
         </div>
-        <p className="text-xs text-slate-300 max-w-xs">
-          Đưa camera điện thoại hướng về phía mã QR dán trên thân tủ điện Minatek để tự động kết nối PWA.
+        <p className="text-xs text-slate-600 max-w-xs">
+          Hướng camera về phía mã QR trên thân tủ điện Minatek để tự động kết nối PWA.
         </p>
         <button
           onClick={handleSimulateScan}
           disabled={scanning}
-          className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-cyan-500/25 transition-all flex items-center justify-center gap-2"
+          className="w-full py-3 bg-cyan-500 hover:bg-cyan-600 text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
         >
           <ShieldCheck className="w-4 h-4" />
-          {scanning ? 'Đang Quét Thiết Bị...' : 'Mô Phỏng Quét QR Mã MINATEK'}
+          {scanning ? 'Đang Quét Mã...' : 'Mô Phỏng Quét QR Mã MINATEK'}
         </button>
       </div>
     </ModalBase>
   );
 }
+
