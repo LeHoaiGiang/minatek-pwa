@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
 import IotSimulatorModal from '@/components/IotSimulatorModal';
-import QrScannerModal from '@/components/Modals';
+import { QrScannerModal } from '@/components/Modals';
 import { LogOut, Copy, Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getMinatekTabs, TabData } from '@/lib/store';
