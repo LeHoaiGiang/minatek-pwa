@@ -1,60 +1,75 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Cpu, User, Plus } from 'lucide-react';
+import { LayoutGrid, UserCheck, Bell } from 'lucide-react';
 
 interface BottomNavProps {
-  onOpenSimulator?: () => void;
-  onRefresh?: () => void;
-  onAddDevice?: () => void;
+  activeTab: 'devices' | 'user' | 'notifications';
+  onChangeTab: (tab: 'devices' | 'user' | 'notifications') => void;
 }
 
-export default function BottomNav({ onOpenSimulator, onRefresh, onAddDevice }: BottomNavProps) {
-  const pathname = usePathname();
-
-  const isHome = pathname === '/';
-  const isUser = pathname === '/user';
-
+export default function BottomNav({ activeTab, onChangeTab }: BottomNavProps) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white rounded-t-[40px] shadow-[0_-4px_20px_rgba(0,0,0,0.15)] h-[75px] safe-area-bottom">
-      <div className="max-w-md mx-auto h-full flex items-center justify-around relative px-4">
-        {/* Tab 1: Quản lý thiết bị (matching Flutter bottomNavBar.dart index 0) */}
-        <Link
-          href="/"
-          className="flex flex-col items-center justify-center gap-0.5"
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#162744] border-t border-white/10 shadow-2xl h-[70px] safe-area-bottom">
+      <div className="max-w-md mx-auto h-full flex items-center justify-around px-4">
+        {/* Tab 1: Thiết bị */}
+        <button
+          onClick={() => onChangeTab('devices')}
+          className="flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-transform active:scale-95"
         >
-          <Cpu className={`w-[38px] h-[38px] transition-colors ${isHome ? 'text-cyan-500' : 'text-slate-500'}`} />
-          <span className={`text-[12px] font-semibold ${isHome ? 'text-cyan-600 font-bold' : 'text-slate-600'}`}>
-            Quản lý thiết bị
+          <LayoutGrid
+            className={`w-6 h-6 transition-colors ${
+              activeTab === 'devices' ? 'text-[#38a5d8]' : 'text-white/70'
+            }`}
+          />
+          <span
+            className={`text-xs font-bold transition-colors ${
+              activeTab === 'devices' ? 'text-[#38a5d8]' : 'text-white/70'
+            }`}
+          >
+            Thiết bị
           </span>
-        </Link>
+        </button>
 
-        {/* Floating Action Button (+) centered docked (matching Flutter default.dart FAB) */}
-        {onAddDevice && (
-          <div className="relative -top-6 flex flex-col items-center">
-            <button
-              onClick={onAddDevice}
-              className="w-[62px] h-[62px] bg-cyan-400 hover:bg-cyan-500 rounded-full flex items-center justify-center text-white shadow-lg active:scale-95 transition-all border-4 border-white"
-              title="Thêm thiết bị"
-            >
-              <Plus className="w-10 h-10 stroke-[2.5]" />
-            </button>
-          </div>
-        )}
-
-        {/* Tab 2: Dữ liệu người dùng (matching Flutter bottomNavBar.dart index 1) */}
-        <Link
-          href="/user"
-          className="flex flex-col items-center justify-center gap-0.5"
+        {/* Tab 2: Người dùng */}
+        <button
+          onClick={() => onChangeTab('user')}
+          className="flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-transform active:scale-95"
         >
-          <User className={`w-[38px] h-[38px] transition-colors ${isUser ? 'text-cyan-500' : 'text-slate-500'}`} />
-          <span className={`text-[12px] font-semibold ${isUser ? 'text-cyan-600 font-bold' : 'text-slate-600'}`}>
-            Dữ liệu người dùng
+          <UserCheck
+            className={`w-6 h-6 transition-colors ${
+              activeTab === 'user' ? 'text-[#38a5d8]' : 'text-white/70'
+            }`}
+          />
+          <span
+            className={`text-xs font-bold transition-colors ${
+              activeTab === 'user' ? 'text-[#38a5d8]' : 'text-white/70'
+            }`}
+          >
+            Người dùng
           </span>
-        </Link>
+        </button>
+
+        {/* Tab 3: Thông báo */}
+        <button
+          onClick={() => onChangeTab('notifications')}
+          className="flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-transform active:scale-95"
+        >
+          <Bell
+            className={`w-6 h-6 transition-colors ${
+              activeTab === 'notifications' ? 'text-[#38a5d8]' : 'text-white/70'
+            }`}
+          />
+          <span
+            className={`text-xs font-bold transition-colors ${
+              activeTab === 'notifications' ? 'text-[#38a5d8]' : 'text-white/70'
+            }`}
+          >
+            Thông báo
+          </span>
+        </button>
       </div>
     </nav>
   );
 }
+
