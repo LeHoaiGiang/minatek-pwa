@@ -7,7 +7,7 @@ import SensorBoardView from '@/components/SensorBoardView';
 import ControlBoardView from '@/components/ControlBoardView';
 import AlarmBoardView from '@/components/AlarmBoardView';
 import NotificationsView from '@/components/NotificationsView';
-import UserPage from '@/app/user/page';
+import UserPageView from '@/components/UserPageView';
 import {
   LayoutGrid,
   Grid,
@@ -76,7 +76,7 @@ export default function HomePage() {
   if (activeNavTab === 'user') {
     return (
       <>
-        <UserPage onLogout={() => router.push('/login')} />
+        <UserPageView onLogout={() => router.push('/login')} />
         <BottomNav activeTab={activeNavTab} onChangeTab={setActiveNavTab} />
       </>
     );
