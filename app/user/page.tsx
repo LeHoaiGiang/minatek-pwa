@@ -4,11 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Edit3, LogOut, PhoneCall, Trash2, LayoutGrid } from 'lucide-react';
 
-interface UserPageViewProps {
-  onLogout?: () => void;
-}
-
-export default function UserPage({ onLogout }: UserPageViewProps) {
+export default function UserPage({ onLogout }: { onLogout?: () => void } = {}) {
   const router = useRouter();
   const [profile] = useState({
     userCode: '65',
