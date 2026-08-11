@@ -1,3 +1,17 @@
+export interface DeviceControl {
+  id: number;
+  deviceId: number;
+  bid: number;
+  name: string;
+  type: 'sensor' | 'button' | 'alarm';
+  value: number | string;
+  status: 'connect' | 'warning' | 'error';
+  color?: string;
+  min: number;
+  max: number;
+  subType?: number;
+}
+
 export interface BigMonitorItem {
   id: string;
   name: string;
@@ -41,11 +55,39 @@ export interface DeviceData {
   groupId?: string;
 }
 
+// Initial Default Seed Data matching NestJS Backend DeviceControl entities
+export const defaultDeviceControls: DeviceControl[] = [
+  // Controls (Buttons / Switches)
+  { id: 1, deviceId: 1, bid: 0, name: 'BID 0', type: 'button', value: 0, status: 'connect', min: 0, max: 100 },
+  { id: 2, deviceId: 1, bid: 5, name: 'BID 5', type: 'button', value: 0, status: 'connect', min: 0, max: 100 },
+  { id: 3, deviceId: 1, bid: 1, name: 'BID 1', type: 'button', value: 0, status: 'connect', min: 0, max: 100 },
+  { id: 4, deviceId: 1, bid: 6, name: 'BID 6', type: 'button', value: 0, status: 'connect', min: 0, max: 100 },
+  { id: 5, deviceId: 1, bid: 2, name: 'BID 2', type: 'button', value: 0, status: 'connect', min: 0, max: 100 },
+  { id: 6, deviceId: 1, bid: 7, name: 'BID 7', type: 'button', value: 0, status: 'connect', min: 0, max: 100 },
+  { id: 7, deviceId: 1, bid: 3, name: 'BID 3', type: 'button', value: 0, status: 'connect', min: 0, max: 100 },
+  { id: 8, deviceId: 1, bid: 8, name: 'BID 8', type: 'button', value: 0, status: 'connect', min: 0, max: 100 },
+
+  // Sensors
+  { id: 10, deviceId: 1, bid: 0, name: 'BID 0', type: 'sensor', value: 0.0, status: 'connect', min: 0, max: 100, subType: 0 },
+  { id: 11, deviceId: 1, bid: 1, name: 'BID 1', type: 'sensor', value: 0.0, status: 'connect', min: 0, max: 100, subType: 0 },
+  { id: 12, deviceId: 1, bid: 2, name: 'BID 2', type: 'sensor', value: 0.0, status: 'connect', min: 0, max: 100, subType: 0 },
+  { id: 13, deviceId: 1, bid: 3, name: 'BID 3', type: 'sensor', value: 0.0, status: 'connect', min: 0, max: 100, subType: 0 },
+
+  // Alarms
+  { id: 20, deviceId: 1, bid: 0, name: 'BID 0', type: 'alarm', value: 1, status: 'warning', min: 0, max: 100 },
+  { id: 21, deviceId: 1, bid: 1, name: 'BID 1', type: 'alarm', value: 0, status: 'connect', min: 0, max: 100 },
+  { id: 22, deviceId: 1, bid: 2, name: 'BID 2', type: 'alarm', value: 0, status: 'connect', min: 0, max: 100 },
+  { id: 23, deviceId: 1, bid: 3, name: 'BID 3', type: 'alarm', value: 0, status: 'connect', min: 0, max: 100 },
+  { id: 24, deviceId: 1, bid: 4, name: 'BID 4', type: 'alarm', value: 0, status: 'connect', min: 0, max: 100 },
+  { id: 25, deviceId: 1, bid: 5, name: 'BID 5', type: 'alarm', value: 0, status: 'connect', min: 0, max: 100 },
+  { id: 26, deviceId: 1, bid: 6, name: 'BID 6', type: 'alarm', value: 0, status: 'connect', min: 0, max: 100 },
+];
+
 // Initial Default Seed Data for Minatek Smart IoT
 const defaultTabs: TabData[] = [
   {
     id: 'tab-1',
-    devicesName: 'Tủ Điện Trung Tâm 01',
+    devicesName: 'STM32',
     state: true,
     bigMonitor: [
       { id: 'bm-1', name: 'Bơm Nước Chính', state: true, value: 'Chạy ổn định' },
@@ -59,29 +101,33 @@ const defaultTabs: TabData[] = [
       { id: 'sm-4', name: 'Rò Rỉ Điện', state: false, type: 'alarm' },
     ],
     switches: [
-      { id: 'sw-1', bid: 1, name: 'Đèn Chiếu Sáng', state: true, type: 'output' },
-      { id: 'sw-2', bid: 2, name: 'Bơm Phụ 01', state: false, type: 'output' },
-      { id: 'sw-3', bid: 3, name: 'Van Khẩn Cấp', state: true, type: 'output' },
-      { id: 'sw-4', bid: 4, name: 'Quạt Hút Mùi', state: false, type: 'output' },
+      { id: 'sw-1', bid: 0, name: 'BID 0', state: false, type: 'button' },
+      { id: 'sw-2', bid: 5, name: 'BID 5', state: false, type: 'button' },
+      { id: 'sw-3', bid: 1, name: 'BID 1', state: false, type: 'button' },
+      { id: 'sw-4', bid: 6, name: 'BID 6', state: false, type: 'button' },
     ],
   },
   {
     id: 'tab-2',
-    devicesName: 'Hệ Thống Chiếu Sáng KCN',
+    devicesName: 'HTGas Q8 test',
     state: true,
     bigMonitor: [
       { id: 'bm-201', name: 'Máy Phát Điện Dự Phòng', state: true, value: 'Đang chờ' },
-      { id: 'bm-202', name: 'Tủ Động Lực A', state: true, value: '220V - 15A' },
     ],
     smallMonitor: [
       { id: 'sm-201', name: 'Cảm Biến Khói', state: true, type: 'sensor' },
-      { id: 'sm-202', name: 'Cửa Tự Động', state: true, type: 'sensor' },
     ],
     switches: [
-      { id: 'sw-201', bid: 1, name: 'Đèn Xưởng 01', state: true, type: 'output' },
-      { id: 'sw-202', bid: 2, name: 'Đèn Xưởng 02', state: true, type: 'output' },
-      { id: 'sw-203', bid: 3, name: 'Đèn Cảnh Báo', state: false, type: 'output' },
+      { id: 'sw-201', bid: 0, name: 'BID 0', state: true, type: 'button' },
     ],
+  },
+  {
+    id: 'tab-3',
+    devicesName: 'Parc Mall C',
+    state: true,
+    bigMonitor: [],
+    smallMonitor: [],
+    switches: [],
   },
 ];
 
@@ -219,13 +265,13 @@ export const deleteSmallMonitor = (tabIndex: number, monitorIndex: number): TabD
 
 export const addSwitch = (tabIndex: number, name: string, bid?: number): TabData[] => {
   if (globalTabs[tabIndex]) {
-    const nextBid = bid || globalTabs[tabIndex].switches.length + 1;
+    const nextBid = bid !== undefined ? bid : globalTabs[tabIndex].switches.length;
     globalTabs[tabIndex].switches.push({
       id: `sw-${Date.now()}`,
       bid: nextBid,
       name,
       state: false,
-      type: 'output',
+      type: 'button',
     });
   }
   saveToLocalStorage(globalTabs);
@@ -247,4 +293,5 @@ export const deleteSwitch = (tabIndex: number, switchIndex: number): TabData[] =
   saveToLocalStorage(globalTabs);
   return [...globalTabs];
 };
+
 
