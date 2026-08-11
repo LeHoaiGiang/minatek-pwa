@@ -13,35 +13,18 @@
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
-  user-select: none;
 }
 
-input, textarea, select {
-  user-select: text;
-}
-
-html, body {
+body {
   font-family: var(--font-sans);
   background: var(--bg-cyber-gradient);
   background-attachment: fixed;
   color: #f1f5f9;
   min-height: 100vh;
-  min-height: -webkit-fill-available;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  overscroll-behavior-y: contain;
 }
-
-/* Mobile Safe Area Padding Utilities */
-.safe-area-top {
-  padding-top: env(safe-area-inset-top, 0px);
-}
-
-.safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 16px);
-}
-
 
 /* Glassmorphism utility card */
 .glass-panel {

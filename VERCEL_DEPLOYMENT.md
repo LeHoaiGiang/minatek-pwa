@@ -74,24 +74,3 @@ vercel --prod
    - **iOS Safari**: Nhấn biểu tượng **Chia sẻ (Share)** -> Chọn **"Thêm vào Màn hình chính" (Add to Home Screen)**.
 3. **Chạy ngoại tuyến (Offline)**: Tắt Wifi/4G, mở app Minatek trên màn hình chính – PWA vẫn khởi động mượt mà nhờ Service Worker.
 4. **Giả lập dữ liệu IoT**: Nhấn nút **"Giả Lập IoT"** trên thanh tiêu đề để mô phỏng tín hiệu cảm biến thời gian thực.
-
----
-
-## 5. Danh Mục Kiểm Tra Bảo Mật (Security Checkpoints) Khi Deploy Vercel
-
-Ứng dụng PWA đã được cấu hình tối ưu các tiêu chuẩn bảo mật sau:
-
-1. **Bắt buộc HTTPS & SSL Certificate**:
-   - Vercel cấp phát tự động chứng chỉ SSL/TLS 256-bit miễn phí. Service Worker (`sw.js`) chỉ kích hoạt được trên HTTPS.
-2. **Cấu Hình HTTP Security Headers** (Đã bổ sung trong `next.config.js` & `vercel.json`):
-   - **X-Frame-Options: DENY**: Chống tấn công Clickjacking.
-   - **X-Content-Type-Options: nosniff**: Chống tấn công MIME-sniffing.
-   - **Strict-Transport-Security (HSTS)**: Ép trình duyệt luôn dùng HTTPS.
-   - **Referrer-Policy: strict-origin-when-cross-origin**: Bảo mật dữ liệu chuyển hướng.
-   - **Permissions-Policy**: Giới hạn quyền truy cập thiết bị (camera, mic, vị trí).
-   - **Cache-Control riêng cho `sw.js`**: `no-cache, no-store, must-revalidate` để ngăn CDN Vercel cache nhầm file Service Worker cũ.
-3. **Bảo Vệ Dữ Liệu Nhạy Cảm Trên Browser Storage**:
-   - Service Worker thiết lập cơ chế **Network-First** cho mọi endpoint `/api/*`. Dữ liệu API thực thời **không lưu trữ vào CacheStorage** nhằm tránh lộ dữ liệu trên thiết bị dùng chung.
-4. **Quản Lý Biến Môi Trường (Secrets Management)**:
-   - Secret key, Database Password chỉ lưu tại **Vercel Dashboard -> Settings -> Environment Variables**.
-

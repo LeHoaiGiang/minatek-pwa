@@ -13,24 +13,7 @@ import {
   deleteSwitch,
 } from '@/lib/store';
 
-const BACKEND_URL = process.env.NESTJS_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
-
 export async function GET() {
-  if (BACKEND_URL) {
-    try {
-      const res = await fetch(`${BACKEND_URL}/control/v2`, {
-        headers: { 'Content-Type': 'application/json' },
-        next: { revalidate: 0 },
-      });
-      if (res.ok) {
-        const backendData = await res.json();
-        return NextResponse.json(backendData);
-      }
-    } catch (err) {
-      console.warn('[PWA API] Failed connecting to NestJS backend, using fallback store:', err);
-    }
-  }
-
   const tabs = getMinatekTabs();
   return NextResponse.json(tabs);
 }
@@ -38,27 +21,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { action, tabIndex, subIndex, name, bid, deviceId, type } = body;
-
-    // Proxy to NestJS backend if configured
-    if (BACKEND_URL && deviceId && bid !== undefined) {
-      try {
-        const queryParams = new URLSearchParams();
-        if (name) queryParams.append('name', name);
-        if (type) queryParams.append('type', type);
-        queryParams.append('bid', String(bid));
-
-        const res = await fetch(`${BACKEND_URL}/control/${deviceId}?${queryParams.toString()}`, {
-          method: 'POST',
-        });
-        if (res.ok) {
-          const resData = await res.json();
-          return NextResponse.json(resData);
-        }
-      } catch (err) {
-        console.warn('[PWA API] Failed posting to NestJS backend:', err);
-      }
-    }
+    const { action, tabIndex, subIndex, name, bid } = body;
 
     let updatedTabs = getMinatekTabs();
 
@@ -102,4 +65,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Lỗi cập nhật trạng thái điều khiển' }, { status: 500 });
   }
 }
-
