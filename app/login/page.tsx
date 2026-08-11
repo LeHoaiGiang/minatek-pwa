@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Lock, User, ArrowRight, AlertCircle, Phone, Radio } from 'lucide-react';
+import { Lock, User, ArrowRight, AlertCircle, Phone, Radio, LayoutGrid } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -39,56 +39,54 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#73c1d9] via-[#66b0c7] to-[#2a849f] text-slate-800 flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-[25px] p-8 shadow-2xl space-y-6 text-slate-800">
-        {/* Minatek Logo image matching Flutter App */}
+    <div className="min-h-screen bg-[#1e386b] text-white flex flex-col items-center justify-center p-4 font-sans select-none">
+      <div className="w-full max-w-md bg-[#162744] rounded-3xl p-8 shadow-2xl space-y-6 border border-white/10 text-white">
+        {/* Minatek Logo & Header matching Mobile App */}
         <div className="text-center space-y-3">
-          <img
-            src="https://minatek.vn/uploads/san-pham/logo-minatek-52cJ.png"
-            alt="Minatek Logo"
-            className="h-16 mx-auto object-contain"
-          />
-          <h1 className="text-xl font-bold text-cyan-800 tracking-tight">
-            ĐĂNG NHẬP HỆ THỐNG MINATEK
+          <div className="w-20 h-20 bg-[#38a5d8] rounded-3xl mx-auto flex items-center justify-center shadow-lg">
+            <LayoutGrid className="w-12 h-12 text-white" />
+          </div>
+          <h1 className="text-2xl font-extrabold text-white tracking-tight pt-1">
+            MINATEK SMART IoT
           </h1>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-white/70">
             Giám sát & Điều khiển tủ điện tự động hóa thông minh
           </p>
         </div>
 
         {errorMsg && (
-          <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 text-xs font-semibold flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+          <div className="p-3 bg-rose-500/20 border border-rose-500/50 rounded-2xl text-rose-300 text-xs font-semibold flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
             <span>{errorMsg}</span>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">Tên Đăng Nhập</label>
+            <label className="block text-xs font-bold text-white/90 mb-1.5">Tên Đăng Nhập</label>
             <div className="relative">
-              <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+              <User className="w-4 h-4 text-white/50 absolute left-3.5 top-3.5" />
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Nhập tên đăng nhập..."
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-800 focus:outline-none focus:border-cyan-500 transition-colors"
+                className="w-full bg-[#192e54] border border-white/15 rounded-2xl py-3 pl-10 pr-4 text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#38a5d8] transition-colors"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">Mật Khẩu</label>
+            <label className="block text-xs font-bold text-white/90 mb-1.5">Mật Khẩu</label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+              <Lock className="w-4 h-4 text-white/50 absolute left-3.5 top-3.5" />
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-800 focus:outline-none focus:border-cyan-500 transition-colors"
+                className="w-full bg-[#192e54] border border-white/15 rounded-2xl py-3 pl-10 pr-4 text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#38a5d8] transition-colors"
                 required
               />
             </div>
@@ -97,28 +95,29 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 active:scale-98"
+            className="w-full py-3.5 bg-[#38a5d8] hover:bg-[#2d92c2] text-white font-bold text-base rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 active:scale-98"
           >
             {loading ? (
               <span>Đang Kết Nối Server...</span>
             ) : (
               <>
                 <span>Đăng Nhập</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-5 h-5 stroke-[2.5]" />
               </>
             )}
           </button>
         </form>
 
-        <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
+        <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs text-white/70 font-medium">
           <span className="flex items-center gap-1">
-            <Phone className="w-3.5 h-3.5 text-cyan-600" /> 094 292 6979
+            <Phone className="w-3.5 h-3.5 text-[#38a5d8]" /> 094 292 6979
           </span>
           <span className="flex items-center gap-1">
-            <Radio className="w-3.5 h-3.5 text-cyan-600" /> minatek.vn
+            <Radio className="w-3.5 h-3.5 text-[#38a5d8]" /> minatek.vn
           </span>
         </div>
       </div>
     </div>
   );
 }
+
